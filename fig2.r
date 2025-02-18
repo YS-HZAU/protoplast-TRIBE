@@ -1,4 +1,15 @@
-library(Guitar)
+library("Guitar")
+library("ggsignif")
+library("tidyr" )
+library("car")
+library("agricolae" )
+library("ggplot2")
+library("reshape2")
+library("tidyverse")
+library("ggthemes")
+library("scales")
+library("stats")
+library("ggpubr")
 ###########################################################################
 
 # get the location of HiCEs and OFTEs in bed format
