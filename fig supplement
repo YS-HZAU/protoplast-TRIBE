@@ -1,1 +1,137 @@
+library("ggsignif")
+library("tidyr" )
+library("car")
+library("agricolae" )
+library("ggplot2")
+library("reshape2")
+library("tidyverse")
+library("ggthemes")
+library("scales")
+library("stats")
+library("ggpubr")
+library("ggbeeswarm")
+library("ggcor")
+library("ggvenn")
+library("UpSetR")
+###################################################################
+# get the RDV data 
+# d1: protoplast RDVs
+# d2: leaf RDVs
+# data are formatted as follows：
 
+   #type of RDVs #number of RDVs
+p1 <- ggplot(d1,aes(x=mutation,y=value,fill=mutation)) + 
+		geom_bar(stat="identity",position = position_dodge2(0.8)) + 
+		geom_errorbar(aes(ymax=value+sd,ymin=value-sd),position=position_dodge(0.9),width=0.2,size=1.2,colour="#4C5454",alpha=0.7) + 
+		scale_fill_manual(values=c('A>G'='#73c8dc', 'T>C'='#fcd72e', 'A>C'='#5A7FC1', 'A>T'='#C3DF0A', 'C>A'='#DEB982','C>G'='#f2cce1', 'C>T'='#f6ac5d','G>A'='#A3DCEC', 'G>C'='#6C9C44', 'G>T'='#CEB5BD', 'T>A'='#6C6C74', 'T>G'='#ec6d5c')) + 
+		theme_bw() + 
+		geom_text(aes(y=yma+400,label=groups),size=5) + 
+		theme(axis.text.x=element_blank(),
+				legend.position = 'none',
+				panel.grid=element_blank(),
+				axis.text.y = element_text(size= 12,color = "black")) + 
+		labs(x=NULL,y=NULL)
+
+p2 <- ggplot(d2,aes(x=mutation,y=value,fill=mutation)) + 
+		geom_bar(stat="identity",position = position_dodge2(0.8)) + 
+		geom_errorbar(aes(ymax=value+sd,ymin=value-sd),position=position_dodge(0.9),width=0.2,size=1.2,colour="#4C5454",alpha=0.7) + 
+		scale_fill_manual(values=c('A>G'='#73c8dc', 'T>C'='#fcd72e', 'A>C'='#5A7FC1', 'A>T'='#C3DF0A', 'C>A'='#DEB982','C>G'='#f2cce1', 'C>T'='#f6ac5d','G>A'='#A3DCEC', 'G>C'='#6C9C44', 'G>T'='#CEB5BD', 'T>A'='#6C6C74', 'T>G'='#ec6d5c')) + 
+		theme_bw() + 
+		theme(axis.text.x = element_text(angle = 45, hjust = 1 ),
+				legend.position = 'none',
+				panel.grid=element_blank(),
+				axis.text = element_text(size= 12,color = "black")) + 
+		geom_text(aes(y=yma+200,label=groups),size=5) + 
+		labs(x=NULL,y=NULL)
+pout <- (p1/p2)+plot_annotation(tag_levels = list(c('leaf', 'root')))	
+ggsave("figure_2C.pdf",width=6,height=5)
+		  
+ggsave("figure_S1A.pdf",width=6,height=5)
+
+###################################################################
+# get qRT-PCR data
+ggplot(df,aes(x=factor(name,levels = c('ADARdd-OE-leaf-1','ADARdd-OE-leaf-2','ADARdd-OE-leaf-3','EV-1','EV-2','EV-3','ADARdd-protoplast-1',ADARdd-protoplast-2','ADARdd-protoplast-3','MCPADARdd-protoplast-1','MCPADARdd-protoplast-2','MCPADARdd-protoplast-3')),y=mean)) + 
+    geom_bar(aes(fill=name),stat="identity",position=position_dodge(0.9)) + 
+    geom_errorbar(aes(x=name,ymin=mean-sd,ymax=mean+sd),width=0.2,size=1,alpha=0.9,colour="#4C5454") + 
+    theme_bw() +theme(axis.text.x = element_text(angle = 45, hjust = 1 ),
+                      legend.position = 'none',panel.grid=element_blank(),
+                      axis.text = element_text(size= 12,color = "black"),
+                      axis.title = element_text(size = 12,color ="black")) + 
+    labs(x=NULL,y='ΔCt(UBQ) - ΔCt(ADAR)')
+ggsave("figure_S2A.pdf",width=6,height=5)
+
+###################################################################
+
+# get unique mapped data
+
+f1 <- read.table("uniq_map_summary.txt",sep="\t",header=F)
+f1 <- f1[order(f1$V1),]
+f1$genotype <- c(rep("leaf",3),rep("plast",3),rep('plast_adar',3),'plast_MLAG')
+f1$replicates <- c(rep(c("r1","r2",'r3'),3),'r1')
+ggplot(f1,aes(x=factor(V1,levels = c('ADARdd-OE-leaf-1_Log.final.out_align',
+                                     'ADARdd-OE-leaf-2_Log.final.out_align',
+                                     'ADARdd-OE-leaf-3_Log.final.out_align',
+                                     'EV-1_Log.final.out_align',
+                                     'EV-2_Log.final.out_align',
+                                     'EV-3_Log.final.out_align',
+                                     'ADARdd-protoplast-1_Log.final.out_align',
+                                     'ADARdd-protoplast-2_Log.final.out_align',
+                                     'ADARdd-protoplast-3_Log.final.out_align',
+                                     'MCPADARdd-protoplast-1_Log.final.out_align',
+                                     'MCPADARdd-protoplast-2_Log.final.out_align',
+                                     'MCPADARdd-protoplast-3_Log.final.out_align'
+)),y=V3,label=replicates))+
+    geom_bar(width = 0.6, position =position_dodge2(0.8),stat='identity',aes(fill=genotype))+
+    coord_flip()+
+    scale_y_continuous(breaks = c(seq(0,100,20)),limits = c(0,100))+
+    scale_fill_manual(values=c(leaf='#c6e7f4',
+                               plast='#b5d9a4',
+                               plast_adar='#f29fa0',
+                               plast_MLAG='#ffd97b')) + 
+    geom_text(position = position_dodge2(0.8),vjust = 0.5,hjust=-0.5) + 
+    labs(x=NULL,y="mapping percentage (%)") + 
+    theme_pander() + 
+    theme(axis.line.x = element_line(colour = "black"),legend.title =element_blank(),
+          axis.title = element_text(size = 12,color ="black"),
+          axis.text = element_text(size= 12,color = "black"))
+ggsave("figure_S2B.pdf",width=6,height=5)
+
+###################################################################
+# get the tpm data from featureCount 
+
+tpm<-read.table("gene_tpm",header =T,row.names=1)
+colnames(tpm) <- c('ADARdd-OE-leaf-1','ADARdd-OE-leaf-2','ADARdd-OE-leaf-3','EV-1','EV-2','EV-3','ADARdd-protoplast-1',ADARdd-protoplast-2','ADARdd-protoplast-3','MCPADARdd-protoplast-1','MCPADARdd-protoplast-2','MCPADARdd-protoplast-3')
+quickcor(log2(tpm+0.1), 
+         type = "lower", 
+         show.diag = F,
+         cor.test=T,
+         method='pearson',
+         grid.size=0.1,
+         grid.colour = "black") + 
+    geom_ellipse2() + 
+    scale_fill_gradientn(colours = c("#E9F2C0","#D4EBA8","#A2DD6F","#16AF00","#109F00","#0B8F00","#067F00","#036E00","#005E00","#003300")) + 
+    geom_number(data = get_data(type = "lower"),aes(num = r),hjust=-0.2,vjust=3,size=2)
+ggsave("figure_S2C.pdf",width=6,height=5)
+###################################################################
+# x1 to x6 indicate the editing location of 6 replicates of OFTEs
+x1 <- read.table('clipboard',header=F)
+x2 <- read.table('clipboard',header=F)
+x3 <- read.table('clipboard',header=F)
+x4 <- read.table('clipboard',header=F)
+x5 <- read.table('clipboard',header=F)
+x6 <- read.table('clipboard',header=F)
+upset_list <- list(x1,x2,x3,x4,x5,x6)
+names(upset_list) <- c('q1','q2','q3','q4','q5','q6')
+upset_list<- purrr::map(upset_list, na.omit)
+upset_list<- purrr::map(upset_list, na.omit)
+upset_list<- purrr::map(upset_list, function(x){x[x!=""]})
+#作图
+upset(fromList(upset_list),  # fromList一个函数，用于将列表转换为与UpSetR兼容的数据形式。
+nsets = 100,       
+nintersects = 40,    
+order.by = "freq",   
+keep.order = F,        
+mb.ratio = c(0.6,0.4),
+text.scale = 1       
+)
+ggsave("figure_S4A.pdf",width=6,height=5)
