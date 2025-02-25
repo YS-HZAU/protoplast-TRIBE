@@ -90,3 +90,5 @@ bcftools stats $sample > ${sample}.stats && cat ${sample}.stats grep "^ST" ${sam
 # After all vcf file were get stats-ed, then run follow code
 paste *_temp > nucleotide_mutation_summary.txt
 
+######################################################################
+echo "finish calling SNPs"
